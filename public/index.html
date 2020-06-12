@@ -1,33 +1,38 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Login Github</title>
-    <!-- meta info and dependencies go here -->
-  </head>
-  <body>
-    <a id="oauth" href="#">Login with Github</a>
-  </body>
 
-  <script>
-    // this is the github login/signup page
-    let URL = 'https://github.com/login/oauth/authorize';
+<head>
+  <title>Login with Google</title>
+  <!-- meta info and dependencies go here -->
+</head>
 
-    let options = {
-      client_id: 'e418bad691afdf881466',
-      redirect_uri: 'http://localhost:3000/oauth',
-      scope: 'read:user',
-      state: '401appconsent',
-    };
+<body>
+  <a id="oauth" href="#">Login with Google</a>
+</body>
 
-    let qs = Object.keys(options)
-      .map((key) => {
-        return `${key}=` + encodeURIComponent(options[key]);
-      })
-      .join('&');
+<script>
+  let URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 
-    let authURL = `${URL}?${qs}`;
+  let options = {
+    client_id:
+      '444667393820-6rpjjjaepv6lu63oecpe61e6698bd01s.apps.googleusercontent.com',
+    redirect_uri: 'http://localhost:3000/oauth',
+    scope: 'https://www.googleapis.com/auth/drive.metadata.readonly',
+    state: 'path-through value',
+    include_granted_scopes: 'true',
+    response_type: 'code',
+  };
 
-    let link = document.getElementById('oauth');
-    link.setAttribute('href', authURL);
-  </script>
+  let qs = Object.keys(options)
+    .map((key) => {
+      return `${key}=` + encodeURIComponent(options[key]);
+    })
+    .join('&');
+
+  let authURL = `${URL}?${qs}`;
+
+  let link = document.getElementById('oauth');
+  link.setAttribute('href', authURL);
+</script>
+
 </html>

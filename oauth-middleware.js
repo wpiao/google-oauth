@@ -3,11 +3,9 @@
 const superagent = require('superagent');
 const users = require('./users.js');
 
-// these are the required creds (some private - some public) for login/signup with a 3rd party service - OAuth
-const tokenServerUrl = 'https://github.com/login/oauth/access_token'; // api endpoint for getting a token
-const remoteAPI = 'https://api.github.com/user'; // take our token and make a request to this endpoint to get a user
-const CLIENT_ID = 'e418bad691afdf881466'
-const CLIENT_SECRET = '7ab6e74511c3d6e7ab2ba4b076c8b5c99474ffc3';
+const tokenServerUrl = 'https://accounts.google.com/o/oauth2/v2/auth'; // api endpoint for getting a token
+const CLIENT_ID = '444667393820-6rpjjjaepv6lu63oecpe61e6698bd01s.apps.googleusercontent.com';
+const CLIENT_SECRET = 'M_xA5KS1W5S4B09Zdr7YmrVb';
 const API_SERVER = 'http://localhost:3000/oauth';
 
 module.exports = async function authorize(req, res, next) {
@@ -19,37 +17,31 @@ module.exports = async function authorize(req, res, next) {
   // 5 - save the user and generate a user token
 
   try {
-    let code = req.query.code;
-    console.log('__CODE__:', code);
-
+    const code = req.query.code;
     let remoteToken = await exchangeCodeForToken(code);
-    console.log('__GH TOKEN__:', remoteToken);
-
-    let remoteUser = await getRemoteUserInfo(remoteToken);
-    console.log('__GH USER__:', remoteUser);
-
-    let [user, token] = await getUser(remoteUser);
-    req.token = token;
-    req.user = user;
-
-    console.log('__LOCAL USER__:', user);
+    console.log('__Google TOKEN__:', remoteToken);
     next();
-  } catch(err) {
+  } catch (err) {
     next(`Error: ${err}`);
   }
-}
+};
 
-// this will use the access_token github api endpoint
 async function exchangeCodeForToken(code) {
-  let tokenResponse = await superagent.post(tokenServerUrl)
-    .send({
-      code: code,
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      redirect_uri: API_SERVER,
-      grant_type: 'authorization_code'
-    })
-  
+  console.log('code', code);
+  let tokenResponse = await superagent.post('https://www.googleapis.com/oauth2/v4/token').type('form').send({
+    code: code,
+    client_id: CLIENT_ID,
+    client_secret: CLIENT_SECRET,
+    redirect_uri: API_SERVER,
+    grant_type: 'authorization_code',
+    // response_type: 'token',
+    // scope: 'https://www.googleapis.com/auth/drive.metadata.readonly',
+    // include_granted_scopes: true,
+    // state: 'pass-through value',
+  });
+
+  console.log(tokenResponse.body);
+
   let access_token = tokenResponse.body.access_token;
   return access_token;
 }
@@ -57,7 +49,8 @@ async function exchangeCodeForToken(code) {
 // this will use the user api endpoint to get user info/repo info
 async function getRemoteUserInfo(token) {
   // this will use the access token to get user details
-  let userResponse = await superagent.get(remoteAPI)
+  let userResponse = await superagent
+    .get(remoteAPI)
     .set('user-agent', 'express-app')
     .set('Authorization', `token ${token}`);
 
@@ -65,17 +58,21 @@ async function getRemoteUserInfo(token) {
   return user;
 }
 
+function getURL() {
+  return document.URL;
+}
+
 async function getUser(remoteUser) {
   // this will actually save the user to the db and return user details from the db
   let userRecord = {
     username: remoteUser.login,
-    password: 'canbeanything'
-  }
+    password: 'canbeanything',
+  };
 
   let user = await users.save(userRecord);
   // this is meant for us to generate a final user token to access routes in our app
   // tomorrow: this is will be used in the format of a Bearer Authentication Token
   let token = users.generateToken(user);
- 
+
   return [user, token];
 }

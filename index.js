@@ -6,6 +6,8 @@ const bearerAuth = require('./bearer-auth-middleware.js');
 const acl = require('./acl-middleware.js');
 const oauth = require('./oauth-middleware.js');
 const users = require('./users.js');
+const url = require('url');
+const querystring = require('querystring');
 
 const app = express();
 
@@ -32,6 +34,7 @@ app.post('/signin', basicAuth, (req, res) => {
 
 // this is our "redirect_uri"
 app.get('/oauth', oauth, (req, res) => {
+  // console.log('---query----', querystring.parse(req.url));
   res.status(200).send(req.token);
 });
 
@@ -59,6 +62,6 @@ app.delete('/delete', bearerAuth, acl('delete'), (req, res) => {
   res.json({ msg: '/delete worked' });
 });
 
-app.listen(4000, () => {
-  console.log('listening on 4000!');
+app.listen(3000, () => {
+  console.log('listening on 3000!');
 });
